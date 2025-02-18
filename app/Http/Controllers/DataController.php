@@ -9,11 +9,8 @@ use Illuminate\Support\Facades\Auth;
 class DataController extends Controller
 {
     // Menampilkan data dalam bentuk JSON
-    public function index()
-    {
-        // Ambil data sesuai user login
-        $data = Data::where('user_id', Auth::id())->get();
-        // Kembalikan dalam format JSON
+    public function index() {
+        $data = Data::all();
         return response()->json($data);
     }
 
@@ -32,5 +29,13 @@ class DataController extends Controller
         ]);
 
         return response()->json(['message' => 'Data saved successfully']);
+    }
+    public function destroy($id) {
+        $data = Data::find($id);
+        if ($data) {
+            $data->delete();
+            return response()->json(['message' => 'Data deleted successfully']);
+        }
+        return response()->json(['message' => 'Data not found'], 404);
     }
 }

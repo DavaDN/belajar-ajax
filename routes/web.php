@@ -24,3 +24,4 @@ Route::get('/home', function () {
 Route::get('/api/home-data', [DataController::class, 'index'])->middleware('auth');
 
 Route::post('/data/store', [DataController::class, 'store'])->middleware('auth');
+Route::delete('/data/delete/{id}', [DataController::class, 'destroy'])->middleware('auth');

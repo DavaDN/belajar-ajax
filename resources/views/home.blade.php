@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Home - Input & Table Data</title>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <style>
     /* Reset CSS */
     * {
@@ -34,7 +35,7 @@
     /* Styling Container */
     .container {
       background: rgba(30, 30, 30, 0.95);
-      padding: 30px;
+      padding: 60px;
       border-radius: 10px;
       box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
       text-align: center;
@@ -93,10 +94,16 @@
       background: linear-gradient(135deg, #e76b4a, #ff7e5f);
     }
     /* Tabel */
+    #table-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center; /* Center horizontally */
+    }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      max-width: 800px; /* Set a max width for better appearance */
     }
     table th, table td {
       border: 1px solid #393939;
@@ -144,7 +151,6 @@
       <button id="logout-btn" class="btn">Logout</button>
     </div>
 
-    <!-- Container untuk Tabel Data -->
     <div class="container" id="table-container">
       <h2>Data Table</h2>
       <table id="data-table">
@@ -152,10 +158,10 @@
           <tr>
             <th>Title</th>
             <th>Description</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <!-- Data akan dimuat secara dinamis via AJAX -->
         </tbody>
       </table>
       <button id="reload-btn" class="btn">Reload Data</button>
@@ -164,7 +170,6 @@
 
   <script>
     $(document).ready(function() {
-      // Fungsi untuk memuat data melalui AJAX
       function loadData() {
         $.ajax({
           url: '/api/home-data',
@@ -175,24 +180,25 @@
               let row = '<tr>' +
                           '<td>' + item.title + '</td>' +
                           '<td>' + item.description + '</td>' +
+                          '<td>' + 
+                            '<button class="btn delete-btn" data-id="' + item.id + '">Delete</button>' + 
+                          '</td>' +
                         '</tr>';
               $('#data-table tbody').append(row);
             });
           },
           error: function(xhr) {
-            alert("Gagal memuat data: " + xhr.responseText);
+            alert("Failed to load data: " + xhr.responseText); 
           }
         });
       }
       
-      // Panggil loadData() saat halaman pertama kali dimuat
       loadData();
       
-      // Menangani form submit untuk menyimpan data
       $('#data-form').submit(function(e) {
         e.preventDefault();
         $.ajax({
-          url: '/data/store',
+          url: '/data/store', 
           method: 'POST',
           data: {
             title: $('#data-title').val(),
@@ -200,29 +206,44 @@
             _token: '{{ csrf_token() }}'
           },
           success: function(response) {
-            alert(response.message);
-            // Kosongkan form input
+            alert(response.message); 
             $('#data-title').val('');
             $('#data-description').val('');
-            // Reload data tabel
             loadData();
           },
           error: function(xhr) {
-            alert("Gagal menyimpan data: " + xhr.responseText);
+            alert("Failed to save data: " + xhr.responseText);
           }
         });
       });
       
-      // Reload data ketika tombol Reload diklik
       $('#reload-btn').click(function() {
         loadData();
       });
       
-      // Logout
       $('#logout-btn').click(function() {
         $.post('/logout', { _token: '{{ csrf_token() }}' }, function() {
-          window.location.href = '/login';
+          window.location.href = '/login'; 
         });
+      });
+
+      // Handle delete button click
+      $(document).on('click', '.delete-btn', function() {
+        const id = $(this).data('id');
+        if (confirm('Are you sure you want to delete this item?')) {
+            $.ajax({
+                url: '/data/delete/' + id,
+                method: 'DELETE',
+                success: function(response) {
+                    alert(response.message);
+                    loadData();
+                },
+                error: function(xhr) {
+                    console.error(xhr);
+                    alert("Failed to delete data: " + xhr.responseText);
+                }
+            });
+        }
       });
     });
   </script>
